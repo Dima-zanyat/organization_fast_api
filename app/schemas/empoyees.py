@@ -14,12 +14,12 @@ class SEmployees(BaseModel):
     id: int
     department_id: int
     full_name: str = Field(
-        min_length=MIN_LENGH_STRING_FIELD,
-        max_length=MAX_LEGTH_STRING_FIELD,
+        ge=MIN_LENGH_STRING_FIELD,
+        le=MAX_LEGTH_STRING_FIELD,
     )
     position: str = Field(
-        min_length=MIN_LENGH_STRING_FIELD,
-        max_length=MAX_LEGTH_STRING_FIELD,
+        ge=MIN_LENGH_STRING_FIELD,
+        le=MAX_LEGTH_STRING_FIELD,
     )
     hired_at: Optional[datetime] = None
     created_at: datetime
@@ -33,12 +33,12 @@ class SEmployeesCreate(BaseModel):
     """Схема для создания сотрудника."""
 
     full_name: str = Field(
-        min_length=MIN_LENGH_STRING_FIELD,
-        max_length=MAX_LEGTH_STRING_FIELD,
+        ge=MIN_LENGH_STRING_FIELD,
+        le=MAX_LEGTH_STRING_FIELD,
     )
     position: str = Field(
-        min_length=MIN_LENGH_STRING_FIELD,
-        max_length=MAX_LEGTH_STRING_FIELD,
+        ge=MIN_LENGH_STRING_FIELD,
+        le=MAX_LEGTH_STRING_FIELD,
     )
     hired_at: Optional[datetime] = None
 

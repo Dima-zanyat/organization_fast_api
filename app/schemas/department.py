@@ -3,9 +3,14 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, PositiveInt
 
-from constant import MAX_LEGTH_STRING_FIELD, MIN_LENGH_STRING_FIELD
+from constant import (
+    MAX_LEGTH_STRING_FIELD,
+    MIN_LENGH_STRING_FIELD,
+    MAX_DIGIT_DEPTH,
+    DEFAULT_DEPTH,
+)
 from schemas.empoyees import SEmployees
 
 
@@ -25,10 +30,9 @@ class SDepartmentBase(BaseModel):
 class SDepartmentBaseCreateOrUpdate(BaseModel):
     """Базовая схема для создания или обновления."""
 
-    name: Optional[str] = Field(
-        min_length=MIN_LENGH_STRING_FIELD,
-        max_length=MAX_LEGTH_STRING_FIELD,
-        default=None,
+    name: str = Field(
+        ge=MIN_LENGH_STRING_FIELD,
+        le=MAX_LEGTH_STRING_FIELD,
     )
     parent_id: Optional[int] = None
 
@@ -48,6 +52,15 @@ class SDepartmentCreate(SDepartmentBaseCreateOrUpdate):
 
 class SDepartmentUpdate(SDepartmentBaseCreateOrUpdate):
     """Схема на запрос обновления департамента."""
+
+
+class SDepartmentGet(BaseModel):
+    """Схема запроса на получение объекта."""
+
+    depth: PositiveInt = Field(
+        default=DEFAULT_DEPTH,
+        le=MAX_DIGIT_DEPTH,
+    )
 
 
 class SDepartmentTree(SDepartmentBase):
