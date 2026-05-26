@@ -1,10 +1,11 @@
 """Файл сервисов и бизнес-логики приложения."""
 
+from typing import Optional
 import logging
 
 from models.department import DepartmentModel
 from repositories.department import DepartmentRepository
-from schemas.department import SDepartmentCreate
+from schemas.department import SDepartmentCreate, SDepartmentGet, SDepartmentTree
 
 
 class DepartmentService:
@@ -23,11 +24,11 @@ class DepartmentService:
 
         return await DepartmentRepository.create(data)
 
-
     @classmethod
     async def get_detail_employee_tree(
         cls,
         department_id: int,
-        depth: int,
-        include_employees: bool,
-    ):
+        data: SDepartmentGet,
+    ) -> Optional[SDepartmentTree]:
+        """Получение детальной информации о древе департамента."""
+        department = await DepartmentRepository.get_by_id(department_id=department_id)

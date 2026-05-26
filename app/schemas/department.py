@@ -61,6 +61,7 @@ class SDepartmentGet(BaseModel):
         default=DEFAULT_DEPTH,
         le=MAX_DIGIT_DEPTH,
     )
+    include_employees: bool = True
 
 
 class SDepartmentTree(SDepartmentBase):
