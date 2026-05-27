@@ -9,6 +9,7 @@ from constant import (
     MAX_LEGTH_STRING_FIELD,
     MIN_LENGH_STRING_FIELD,
     MAX_DIGIT_DEPTH,
+    MIN_DIGIT_DEPTH,
     DEFAULT_DEPTH,
 )
 from schemas.empoyees import SEmployees
@@ -59,6 +60,7 @@ class SDepartmentGet(BaseModel):
 
     depth: PositiveInt = Field(
         default=DEFAULT_DEPTH,
+        ge=MIN_DIGIT_DEPTH,
         le=MAX_DIGIT_DEPTH,
     )
     include_employees: bool = True

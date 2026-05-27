@@ -40,6 +40,15 @@ class DepartmentRepository:
             return department
 
     @classmethod
+    async def get_subtree(
+        cls,
+        department_id: int,
+        depth:int,
+    ):
+
+
+
+    @classmethod
     async def list_by_parent_id(
         cls,
         parent_id: int,

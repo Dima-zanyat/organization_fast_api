@@ -1,4 +1,4 @@
-from models.employees import EmployeeModel
+from sqlalchemy import select
 
 from database import new_session
 from schemas.empoyees import SEmployeesCreate
@@ -25,3 +25,17 @@ class EmployeesRepository:
             await session.commit()
             await session.refresh(employee)
             return employee
+
+    @classmethod
+    async def list_by_department_id(
+        cls,
+        department_id: int,
+    ) -> list[EmployeeModel]:
+        """Возвращает список сотрудников."""
+        async with new_session() as session:
+            result = await session.execute(
+                select(EmployeeModel)
+                .where(EmployeeModel.department_id == department_id)
+                .order_by(EmployeeModel.created_at)
+            )
+            return list(result.scalars().all())
