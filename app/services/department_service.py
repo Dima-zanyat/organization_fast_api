@@ -54,30 +54,39 @@ class DepartmentService:
         cls,
         department_id: int,
         data: SDepartmentGet,
-    ) -> Optional[SDepartmentTree]:
+    ):
         """Получение детальной информации о древе департамента."""
         if data.depth <= 0:
             return None
-        department = cls.validate_department(
-            await DepartmentRepository.get_by_id(department_id=department_id)
+        departments = await DepartmentRepository.get_subtree(
+            department_id=department_id,
+            depth=data.depth,
         )
-
-        employees: list[SEmployees] = []
+        departmnets_ids = [department.id for department in departments]
+        employee_by_departmnets_ids: dict[int, list[SEmployees]] = {
+            dep_id: [] for dep_id in departmnets_ids
+        }
         if data.include_employees:
-            employees = await cls.get_emlpoyees(department_id=department_id)
-        children: list[SDepartmentTree] = []
-        new_data = SDepartmentGet(
-            depth=data.depth - 1,
-            include_employees=data.include_employees,
-        )
-        for child in department.sub_departments:
-            child_tree = await cls.get_detail_employee_tree(
-                department_id=child.id,
-                data=new_data,
+            employee_orm = await EmployeesRepository.list_by_departments_ids(
+                department_ids=departmnets_ids,
             )
-            if child_tree:
-                children.append(child_tree)
-        response = SDepartmentTree.model_validate(department)
-        response.employees = employees
-        response.children = children
-        return response
+            for employee in employee_orm:
+                employee_by_departmnets_ids.setdefault(
+                    employee.department_id, []
+                ).append(SEmployees.model_validate(employee))
+        departments_by_id = {dep.id: dep for dep in departments}
+        child_by_department: dict[int | None, list[DepartmentModel]] = {}
+        for department in departments:
+            child_by_department.setdefault(department.parent_id, []).append(department)
+
+        def tree_department(department: DepartmentModel):
+            node = SDepartmentTree.model_validate(department)
+            node.employees = employee_by_departmnets_ids.get(department.id, [])
+            node.children = [
+                tree_department(child)
+                for child in child_by_department.get(department.id, [])
+            ]
+            return node
+
+        root_dep = departments_by_id[department_id]
+        return tree_department(root_dep)

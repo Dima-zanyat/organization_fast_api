@@ -39,3 +39,18 @@ class EmployeesRepository:
                 .order_by(EmployeeModel.created_at)
             )
             return list(result.scalars().all())
+
+    @classmethod
+    async def list_by_departments_ids(
+        cls,
+        department_ids: list[int],
+    ) -> list[EmployeeModel]:
+        if not department_ids:
+            return []
+        async with new_session() as session:
+            result = await session.execute(
+                select(EmployeeModel)
+                .where(EmployeeModel.department_id.in_(department_ids))
+                .order_by(EmployeeModel.department_id, EmployeeModel.created_at)
+            )
+            return list(result.scalars().all())
