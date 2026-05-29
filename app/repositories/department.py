@@ -50,7 +50,7 @@ class DepartmentRepository:
     ) -> list[DepartmentModel]:
         """Получение всех дпартаментов до указанной глубины."""
         async with new_session() as session:
-            root_cte = (
+            tree_cte = (
                 select(
                     DepartmentModel.id,
                     DepartmentModel.name,
@@ -59,31 +59,23 @@ class DepartmentRepository:
                     literal(0).label("level"),
                 )
                 .where(DepartmentModel.id == department_id)
-                .cte("department_tree", recursive=True)
+                .cte("department_cte", recursive=True)
             )
-            department_alias = aliased(DepartmentModel)
-            department_tree = aliased(root_cte)
-            subtree_cte = root_cte.union_all(
-                select(
-                    department_alias.id,
-                    department_alias.name,
-                    department_alias.parent_id,
-                    department_alias.created_at,
-                    (department_tree.c.level + INCREASE_NUMBER).label("level"),
-                ).where(
-                    department_alias.parent_id == department_tree.c.id,
-                    department_tree.c.level < depth - REDUCT_NUMBER_RECURSION,
-                )
+            departments_alias = aliased(DepartmentModel, name="dep")
+            recursive_query = select(
+                departments_alias.id,
+                departments_alias.name,
+                departments_alias.parent_id,
+                departments_alias.created_at,
+                (tree_cte.c.level + 1).label("level"),
+            ).where(
+                departments_alias.parent_id == tree_cte.c.id,
+                tree_cte.c.level < depth - REDUCT_NUMBER_RECURSION,
             )
-            result = await session.execute(
-                select(DepartmentModel)
-                .join(subtree_cte, DepartmentModel.id == subtree_cte.c.id)
-                .order_by(
-                    subtree_cte.c.level,
-                    DepartmentModel.id,
-                )
-            )
-            return list(result.scalars().all())
+
+            final_tree_query = tree_cte.union_all(recursive_query)
+            query_result = await session.execute(select(final_tree_query))
+            return list(query_result.scalars().all())
 
     @classmethod
     async def list_by_parent_id(
