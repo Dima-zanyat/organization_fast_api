@@ -1,9 +1,10 @@
 """Схемы департамента для API."""
 
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator, PositiveInt
+from pydantic import BaseModel, Field, field_validator, PositiveInt, model_validator
 
 from constant import (
     MAX_LEGTH_STRING_FIELD,
@@ -64,6 +65,30 @@ class SDepartmentGet(BaseModel):
         le=MAX_DIGIT_DEPTH,
     )
     include_employees: bool = True
+
+
+class DeleteMode(str, Enum):
+    """Перечисление с допустимыми значениями."""
+
+    CASCADE = "cascade"
+    REASSIGN = "reassign"
+
+
+class SDepartmentDelete(BaseModel):
+    """Схема запроса на удаление департамента."""
+
+    mode: DeleteMode = Field(description="режим удаления только cascade или reassign")
+    reassign_to_department_id: Optional[int] = None
+
+    @model_validator(mode="after")
+    def validate_reassign_department(self) -> "SDepartmentDelete":
+        """ "Проверка значения reassign_to_department_id при моде reassign"""
+
+        if self.mode == DeleteMode.REASSIGN and self.reassign_to_department_id is None:
+            raise ValueError(
+                "Для режима REASSIGN необходимо указать reassign_to_department_id."
+            )
+        return self
 
 
 class SDepartmentTree(SDepartmentBase):

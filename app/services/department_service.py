@@ -106,6 +106,12 @@ class DepartmentService:
         department_id: int,
         data: SDepartmentUpdate,
     ) -> SDepartmentResponse:
+        """Изменение родительского департамента.
+
+        Проверяет существование департамента и нового родителя,
+        а также предотвращает создание циклических ссылок в дереве.
+        """
+
         department = cls.validate_department(
             await DepartmentRepository.get_by_id(department_id)
         )
@@ -132,3 +138,10 @@ class DepartmentService:
             parent_id=new_parent.id,
         )
         return SDepartmentResponse.model_validate(updated_department)
+
+    @classmethod
+    async def delete_department(
+            cls,
+            department_id: int,
+            data:
+    ):
