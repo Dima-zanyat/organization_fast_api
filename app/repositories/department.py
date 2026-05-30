@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from sqlalchemy import select, literal
+from sqlalchemy import select, literal, update, delete
 from sqlalchemy.orm import aliased
 
 
@@ -10,6 +10,7 @@ from constant import REDUCT_NUMBER_RECURSION, INCREASE_NUMBER
 from database import new_session
 from schemas.department import SDepartmentCreate, SDepartmentResponse
 from models.department import DepartmentModel
+from models.employees import EmployeeModel
 
 
 class DepartmentRepository:
@@ -167,17 +168,40 @@ class DepartmentRepository:
             return department
 
     @classmethod
-    async def delete(
+    async def reassign_employees_department(
         cls,
-        department_id: int,
+        emlpoyees_ids: list[int],
+        new_department: int,
     ) -> None:
-        """Удаление департамента."""
+        """Перемещеие сотрудников в другой департамент."""
         async with new_session() as session:
-            department = await session.get(
-                DepartmentModel,
-                department_id,
+            await session.execute(
+                update(EmployeeModel)
+                .where(EmployeeModel.id.in_(emlpoyees_ids))
+                .values(department_id=new_department)
             )
-            if department is None:
-                raise ValueError("Департамента с таким id не существует.")
-            await session.delete(department)
+            await session.commit()
+
+    @classmethod
+    async def delete_departement(
+        cls,
+        departament_id: int,
+    ) -> None:
+        """Удаление одного департамента."""
+        async with new_session() as session:
+            await session.execute(
+                delete(DepartmentModel).where(DepartmentModel.id == departament_id)
+            )
+            await session.commit()
+
+    @classmethod
+    async def delete_by_ids(
+        cls,
+        departament_ids: list[int],
+    ) -> None:
+        """Каскадное удаление департамента."""
+        async with new_session() as session:
+            await session.execute(
+                delete(DepartmentModel).where(DepartmentModel.id.in_(departament_ids))
+            )
             await session.commit()

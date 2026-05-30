@@ -54,3 +54,12 @@ class EmployeesRepository:
                 .order_by(EmployeeModel.department_id, EmployeeModel.created_at)
             )
             return list(result.scalars().all())
+
+    @classmethod
+    async def update_departments_for_employyes(
+        cls,
+        department: DepartmentModel,
+        employees: list[EmployeeModel],
+    ) -> None:
+        """Перемещение сотрудников в другой департамент."""
+        department.employees.extend(employees)

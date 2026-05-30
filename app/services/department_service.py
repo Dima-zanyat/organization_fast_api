@@ -12,6 +12,8 @@ from schemas.department import (
     SDepartmentTree,
     SDepartmentUpdate,
     SDepartmentResponse,
+    SDepartmentDelete,
+    DeleteMode,
 )
 from schemas.empoyees import SEmployees
 
@@ -141,7 +143,35 @@ class DepartmentService:
 
     @classmethod
     async def delete_department(
-            cls,
-            department_id: int,
-            data:
+        cls,
+        department_id: int,
+        data: SDepartmentDelete,
     ):
+        """Удаление департамента."""
+        # Добавить проверку на позитивное положительное число
+        department_delete = cls.validate_department(
+            await DepartmentRepository.get_by_id(department_id)
+        )
+        if data.mode == DeleteMode.CASCADE:
+            departments = await DepartmentRepository.get_full_subtree(
+                department_delete.id
+            )
+            # Отелельный мето для получения ids
+            departments_ids = [d.id for d in departments]
+            await DepartmentRepository.delete_by_ids(departments_ids)
+        if (
+            data.mode == DeleteMode.REASSIGN
+            and data.reassign_to_department_id is not None
+        ):
+            new_department_for_emploees = cls.validate_department(
+                await DepartmentRepository.get_by_id(data.reassign_to_department_id)
+            )
+            emlpoyees = await EmployeesRepository.list_by_department_id(
+                department_delete.id
+            )
+            emlpoyees_ids = [e.id for e in emlpoyees]
+            await DepartmentRepository.reassign_employees_department(
+                emlpoyees_ids,
+                new_department_for_emploees.id,
+            )
+            await DepartmentRepository.delete_departement(department_delete.id)

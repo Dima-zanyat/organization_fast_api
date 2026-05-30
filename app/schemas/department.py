@@ -78,7 +78,7 @@ class SDepartmentDelete(BaseModel):
     """Схема запроса на удаление департамента."""
 
     mode: DeleteMode = Field(description="режим удаления только cascade или reassign")
-    reassign_to_department_id: Optional[int] = None
+    reassign_to_department_id: PositiveInt | None = None
 
     @model_validator(mode="after")
     def validate_reassign_department(self) -> "SDepartmentDelete":
