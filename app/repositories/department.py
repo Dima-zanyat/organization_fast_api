@@ -42,40 +42,97 @@ class DepartmentRepository:
             )
             return department
 
+    @staticmethod
+    def build_subtree_conditions(departments_alias, tree_cte, params=None):
+        """Построение условий для рекурсивного обхода дерева департаментов."""
+
+        if params:
+            if "depth" in params:
+                depth = params["depth"]
+                return [
+                    departments_alias.parent_id == tree_cte.c.id,
+                    tree_cte.c.level < depth - REDUCT_NUMBER_RECURSION,
+                ]
+        if params is None:
+            return [
+                departments_alias.parent_id == tree_cte.c.id,
+            ]
+
+    @staticmethod
+    def build_root_cte(department_id: int):
+        """Создание корневого CTE для построения дерева департаментов."""
+
+        return (
+            select(
+                DepartmentModel.id,
+                DepartmentModel.name,
+                DepartmentModel.parent_id,
+                DepartmentModel.created_at,
+                literal(0).label("level"),
+            )
+            .where(DepartmentModel.id == department_id)
+            .cte("department_cte", recursive=True)
+        )
+
+    @staticmethod
+    def build_recursive_subtree_query(departments_alias, tree_cte, conditions):
+        """Создание рекурсивной части запроса для обхода дерева департаментов."""
+
+        return select(
+            departments_alias.id,
+            departments_alias.name,
+            departments_alias.parent_id,
+            departments_alias.created_at,
+            (tree_cte.c.level + 1).label("level"),
+        ).where(*conditions)
+
     @classmethod
     async def get_subtree(
+        cls,
+        department_id: int,
+        params=None,
+    ) -> list[DepartmentModel]:
+        """Получени поддерева департамента с возможностью выбора параметра."""
+
+        async with new_session() as session:
+            tree_cte = cls.build_root_cte(department_id=department_id)
+            departments_alias = aliased(DepartmentModel, name="dep")
+            condition = cls.build_subtree_conditions(
+                departments_alias, tree_cte, params
+            )
+            recursive_query = cls.build_recursive_subtree_query(
+                departments_alias=departments_alias,
+                tree_cte=tree_cte,
+                conditions=condition,
+            )
+            final_tree_query = tree_cte.union_all(recursive_query)
+            query_result = await session.execute(select(final_tree_query))
+
+            return list(query_result.scalars().all())
+
+    @classmethod
+    async def get_subtree_by_depth(
         cls,
         department_id: int,
         depth: int,
     ) -> list[DepartmentModel]:
         """Получение всех дпартаментов до указанной глубины."""
-        async with new_session() as session:
-            tree_cte = (
-                select(
-                    DepartmentModel.id,
-                    DepartmentModel.name,
-                    DepartmentModel.parent_id,
-                    DepartmentModel.created_at,
-                    literal(0).label("level"),
-                )
-                .where(DepartmentModel.id == department_id)
-                .cte("department_cte", recursive=True)
-            )
-            departments_alias = aliased(DepartmentModel, name="dep")
-            recursive_query = select(
-                departments_alias.id,
-                departments_alias.name,
-                departments_alias.parent_id,
-                departments_alias.created_at,
-                (tree_cte.c.level + 1).label("level"),
-            ).where(
-                departments_alias.parent_id == tree_cte.c.id,
-                tree_cte.c.level < depth - REDUCT_NUMBER_RECURSION,
-            )
+        params = {"depth": depth}
+        return await cls.get_subtree(
+            department_id=department_id,
+            params=params,
+        )
 
-            final_tree_query = tree_cte.union_all(recursive_query)
-            query_result = await session.execute(select(final_tree_query))
-            return list(query_result.scalars().all())
+    @classmethod
+    async def get_full_subtree(
+        cls,
+        department_id: int,
+    ) -> list[DepartmentModel]:
+        """Получение полного поддерева департамента без ограничения глубины."""
+
+        return await cls.get_subtree(
+            department_id=department_id,
+        )
 
     @classmethod
     async def list_by_parent_id(

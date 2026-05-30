@@ -54,9 +54,9 @@ class DepartmentService:
         cls,
         department_id: int,
         data: SDepartmentGet,
-    ):
+    ) -> SDepartmentTree:
         """Получение дерева департаментов."""
-        departments = await DepartmentRepository.get_subtree(
+        departments = await DepartmentRepository.get_subtree_by_depth(
             department_id=department_id,
             depth=data.depth,
         )
