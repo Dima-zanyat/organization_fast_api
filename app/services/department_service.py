@@ -10,6 +10,8 @@ from schemas.department import (
     SDepartmentCreate,
     SDepartmentGet,
     SDepartmentTree,
+    SDepartmentUpdate,
+    SDepartmentResponse,
 )
 from schemas.empoyees import SEmployees
 
@@ -46,6 +48,7 @@ class DepartmentService:
         employees_orm: list[EmployeeModel] = (
             await EmployeesRepository.list_by_department_id(department_id=department_id)
         )
+
         employees = [SEmployees.model_validate(employee) for employee in employees_orm]
         return employees
 
@@ -60,13 +63,16 @@ class DepartmentService:
             department_id=department_id,
             depth=data.depth,
         )
+
         departments_ids: list[int] = [department.id for department in departments]
         departments_by_id: dict[int, DepartmentModel] = {
             dep.id: dep for dep in departments
         }
+
         employees_by_department: dict[int, list[SEmployees]] = {
             dep_id: [] for dep_id in departments_ids
         }
+
         if data.include_employees:
             employees = await EmployeesRepository.list_by_departments_ids(
                 department_ids=departments_ids
@@ -93,3 +99,36 @@ class DepartmentService:
         if root is None:
             raise ValueError("Департамент не найден")
         return get_tree(department=root)
+
+    @classmethod
+    async def update_department(
+        cls,
+        department_id: int,
+        data: SDepartmentUpdate,
+    ) -> SDepartmentResponse:
+        department = cls.validate_department(
+            await DepartmentRepository.get_by_id(department_id)
+        )
+
+        if data.parent_id is not None:
+            new_parent = cls.validate_department(
+                await DepartmentRepository.get_by_id(data.parent_id)
+            )
+
+            if department.id == new_parent.id:
+                raise ValueError("Нельзя сделать родителем самого себя.")
+
+            subtree = await DepartmentRepository.get_full_subtree(department.id)
+
+            subtree_ids = {dep.id for dep in subtree}
+
+            if new_parent.id in subtree_ids:
+                raise ValueError(
+                    "Нельзя переместить департамент внутрь своего поддерева."
+                )
+
+        updated_department = await DepartmentRepository.update(
+            department_id=department.id,
+            parent_id=new_parent.id,
+        )
+        return SDepartmentResponse.model_validate(updated_department)

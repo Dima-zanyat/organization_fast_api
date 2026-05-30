@@ -149,17 +149,17 @@ class DepartmentRepository:
     @classmethod
     async def update(
         cls,
-        departmnent_id: int,
+        department_id: int,
         parent_id: int,
-    ):
+    ) -> DepartmentModel:
         """Назначение нового департамента."""
         async with new_session() as session:
             department = await session.get(
                 DepartmentModel,
-                departmnent_id,
+                department_id,
             )
             if department is None:
-                return None
+                raise ValueError("Департамента с таким id не существует.")
             department.parent_id = parent_id
             session.add(department)
             await session.commit()
@@ -178,6 +178,6 @@ class DepartmentRepository:
                 department_id,
             )
             if department is None:
-                return None
+                raise ValueError("Департамента с таким id не существует.")
             await session.delete(department)
             await session.commit()
