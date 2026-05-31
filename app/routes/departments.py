@@ -1,12 +1,12 @@
 from fastapi import APIRouter, status
 
-from repositories.department import DepartmentRepository
 from schemas.department import (
     SDepartmentResponse,
     SDepartmentCreate,
     SDepartmentTree,
     SDepartmentGet,
 )
+from services.department_service import DepartmentService
 
 router = APIRouter(prefix="/departments")
 
@@ -16,15 +16,23 @@ router = APIRouter(prefix="/departments")
 )
 async def create_department(data: SDepartmentCreate):
     """Создание департамента."""
-    return await DepartmentRepository.create(data)
+    return await DepartmentService.create_department(data)
 
 
 @router.get(
     "/{department_id}", response_model=SDepartmentTree, status_code=status.HTTP_200_OK
 )
 async def get_department_tree(
-    id: int,
-    data: SDepartmentGet,
+    department_id: int,
+    depth: int,
+    include_employees: bool,
 ):
     """Обновление департамента."""
-    return await DepartmentRepository.get_subtree_by_depth(id, data.depth)
+    data = SDepartmentGet(
+        depth=depth,
+        include_employees=include_employees,
+    )
+    return await DepartmentService.get_detail_employee_tree(
+        department_id=department_id,
+        data=data,
+    )
