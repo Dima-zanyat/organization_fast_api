@@ -1,4 +1,21 @@
-"""Файл сервисов и бизнес-логики приложения."""
+"""Сервисный слой для работы с департаментами.
+
+Модуль содержит бизнес-логику управления департаментами и их
+иерархической структурой.
+
+Основные возможности:
+- создание департаментов;
+- получение дерева департаментов заданной глубины;
+- получение сотрудников департаментов;
+- перемещение департаментов внутри дерева;
+- предотвращение циклических ссылок;
+- удаление департаментов и их поддеревьев;
+- перенос сотрудников при удалении департамента.
+
+Сервисный слой выступает посредником между API и репозиториями,
+выполняя валидацию входных данных и проверку бизнес-правил
+перед изменением данных в базе.
+"""
 
 from typing import Optional
 
@@ -19,7 +36,41 @@ from schemas.empoyees import SEmployees
 
 
 class DepartmentService:
-    """Операции с департамент-сервисом."""
+    """
+    Сервисный слой для работы с департаментами.
+
+    Отвечает за реализацию бизнес-логики управления структурой
+    департаментов организации.
+    Методы:
+        create_department:
+            Создание нового департамента с проверкой существования
+            родительского департамента.
+
+        validate_department:
+            Проверка существования департамента и возврат объекта
+            модели при успешной валидации.
+
+        get_employees:
+            Получение списка сотрудников департамента и преобразование
+            ORM-моделей в Pydantic-схемы.
+
+        get_departments_ids:
+            Извлечение списка идентификаторов из коллекции департаментов.
+
+        get_detail_employee_tree:
+            Построение дерева департаментов до указанной глубины
+            с возможностью включения сотрудников каждого узла.
+
+        update_department:
+            Изменение родительского департамента с проверкой
+            корректности структуры дерева и предотвращением циклов.
+
+        delete_department:
+            Удаление департамента:
+            - CASCADE — удаление всего поддерева;
+            - REASSIGN — перенос сотрудников в другой департамент
+              перед удалением.
+    """
 
     @classmethod
     async def create_department(
@@ -54,6 +105,11 @@ class DepartmentService:
         employees = [SEmployees.model_validate(employee) for employee in employees_orm]
         return employees
 
+    @staticmethod
+    def get_departmnets_ids(departments: list[DepartmentModel]) -> list[int]:
+        """Метод для получения списка id департаментов."""
+        return [department.id for department in departments]
+
     @classmethod
     async def get_detail_employee_tree(
         cls,
@@ -66,7 +122,7 @@ class DepartmentService:
             depth=data.depth,
         )
 
-        departments_ids: list[int] = [department.id for department in departments]
+        departments_ids: list[int] = cls.get_departmnets_ids(departments)
         departments_by_id: dict[int, DepartmentModel] = {
             dep.id: dep for dep in departments
         }
@@ -108,33 +164,33 @@ class DepartmentService:
         department_id: int,
         data: SDepartmentUpdate,
     ) -> SDepartmentResponse:
-        """Изменение родительского департамента.
+        """
+        Перемещение департамента в другой родительский департамент.
 
         Проверяет существование департамента и нового родителя,
-        а также предотвращает создание циклических ссылок в дереве.
+        а также предотвращает образование циклов в структуре дерева.
         """
 
         department = cls.validate_department(
             await DepartmentRepository.get_by_id(department_id)
         )
 
-        if data.parent_id is not None:
-            new_parent = cls.validate_department(
-                await DepartmentRepository.get_by_id(data.parent_id)
-            )
+        if data.parent_id is None:
+            raise ValueError("Необходимо указать parent_id")
 
-            if department.id == new_parent.id:
-                raise ValueError("Нельзя сделать родителем самого себя.")
+        new_parent = cls.validate_department(
+            await DepartmentRepository.get_by_id(data.parent_id)
+        )
 
-            subtree = await DepartmentRepository.get_full_subtree(department.id)
+        if department.id == new_parent.id:
+            raise ValueError("Нельзя сделать родителем самого себя.")
 
-            subtree_ids = {dep.id for dep in subtree}
+        subtree = await DepartmentRepository.get_full_subtree(department.id)
 
-            if new_parent.id in subtree_ids:
-                raise ValueError(
-                    "Нельзя переместить департамент внутрь своего поддерева."
-                )
+        subtree_ids = cls.get_departmnets_ids(subtree)
 
+        if new_parent.id in subtree_ids:
+            raise ValueError("Нельзя переместить департамент внутрь своего поддерева.")
         updated_department = await DepartmentRepository.update(
             department_id=department.id,
             parent_id=new_parent.id,
@@ -148,7 +204,6 @@ class DepartmentService:
         data: SDepartmentDelete,
     ):
         """Удаление департамента."""
-        # Добавить проверку на позитивное положительное число
         department_delete = cls.validate_department(
             await DepartmentRepository.get_by_id(department_id)
         )
@@ -156,8 +211,7 @@ class DepartmentService:
             departments = await DepartmentRepository.get_full_subtree(
                 department_delete.id
             )
-            # Отелельный мето для получения ids
-            departments_ids = [d.id for d in departments]
+            departments_ids = cls.get_departmnets_ids(departments)
             await DepartmentRepository.delete_by_ids(departments_ids)
         if (
             data.mode == DeleteMode.REASSIGN
