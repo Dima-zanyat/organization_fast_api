@@ -1,3 +1,5 @@
+"""Ендпоинты департаметна."""
+
 from fastapi import APIRouter, status
 
 from schemas.department import (
@@ -5,6 +7,9 @@ from schemas.department import (
     SDepartmentCreate,
     SDepartmentTree,
     SDepartmentGet,
+    SDepartmentUpdate,
+    SDepartmentDelete,
+    DeleteMode,
 )
 from services.department_service import DepartmentService
 
@@ -24,10 +29,11 @@ async def create_department(data: SDepartmentCreate):
 )
 async def get_department_tree(
     department_id: int,
-    depth: int,
-    include_employees: bool,
+    depth: int = 1,
+    include_employees: bool = True,
 ):
-    """Обновление департамента."""
+    """Получение дерева департамента с сотрудниками."""
+
     data = SDepartmentGet(
         depth=depth,
         include_employees=include_employees,
@@ -36,3 +42,34 @@ async def get_department_tree(
         department_id=department_id,
         data=data,
     )
+
+
+@router.patch(
+    "/{department_id}",
+    response_model=SDepartmentResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def update_department(
+    department_id: int,
+    data: SDepartmentUpdate,
+):
+    """Обновляет департамент, включая смену родительского департамента."""
+
+    return await DepartmentService.update_department(department_id, data)
+
+
+@router.delete("/{department_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_department(
+    department_id: int,
+    mode: DeleteMode,
+    reassign_to_department_id: int,
+):
+    data = SDepartmentDelete(
+        mode=mode,
+        reassign_to_department_id=reassign_to_department_id,
+    )
+    await DepartmentService.delete_department(
+        department_id=department_id,
+        data=data,
+    )
+    return None
