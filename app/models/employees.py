@@ -6,9 +6,8 @@ from typing import Optional
 from sqlalchemy import func, ForeignKey, String, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from constant import MAX_LEGTH_STRING_FIELD
-from database import Model
-from models.department import DepartmentModel
+from app.constant import MAX_LEGTH_STRING_FIELD
+from app.database import Model
 
 
 class EmployeeModel(Model):

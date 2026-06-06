@@ -6,11 +6,11 @@ from sqlalchemy import select, literal, update, delete
 from sqlalchemy.orm import aliased
 
 
-from constant import REDUCT_NUMBER_RECURSION, INCREASE_NUMBER
-from database import new_session
-from schemas.department import SDepartmentCreate, SDepartmentResponse
-from models.department import DepartmentModel
-from models.employees import EmployeeModel
+from app.constant import REDUCT_NUMBER_RECURSION
+from app.database import new_session
+from app.schemas.department import SDepartmentCreate
+from app.models.department import DepartmentModel
+from app.models.employees import EmployeeModel
 
 
 class DepartmentRepository:
@@ -152,6 +152,7 @@ class DepartmentRepository:
         cls,
         department_id: int,
         parent_id: int,
+        name: str,
     ) -> DepartmentModel:
         """Назначение нового департамента."""
         async with new_session() as session:
@@ -162,6 +163,7 @@ class DepartmentRepository:
             if department is None:
                 raise ValueError("Департамента с таким id не существует.")
             department.parent_id = parent_id
+            department.name = name
             session.add(department)
             await session.commit()
             await session.refresh(department)

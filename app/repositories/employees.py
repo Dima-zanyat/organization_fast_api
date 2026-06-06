@@ -16,10 +16,10 @@
 
 from sqlalchemy import select
 
-from database import new_session
-from schemas.empoyees import SEmployeesCreate
-from models.employees import EmployeeModel
-from models.department import DepartmentModel
+from app.database import new_session
+from app.schemas.empoyees import SEmployeesCreate
+from app.models.employees import EmployeeModel
+from app.models.department import DepartmentModel
 
 
 class EmployeesRepository:
@@ -100,12 +100,3 @@ class EmployeesRepository:
                 .order_by(EmployeeModel.department_id, EmployeeModel.created_at)
             )
             return list(result.scalars().all())
-
-    @classmethod
-    async def update_departments_for_employyes(
-        cls,
-        department: DepartmentModel,
-        employees: list[EmployeeModel],
-    ) -> None:
-        """Перемещение сотрудников в другой департамент."""
-        department.employees.extend(employees)

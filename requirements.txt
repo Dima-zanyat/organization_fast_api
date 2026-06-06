@@ -4,3 +4,6 @@ sqlalchemy
 aiosqlite
 pytest
 httpx
+alembic
+asyncpg
+psycopg

@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from constant import MAX_LEGTH_STRING_FIELD, MIN_LENGH_STRING_FIELD
+from app.constant import MAX_LEGTH_STRING_FIELD, MIN_LENGH_STRING_FIELD
 
 
 class SEmployees(BaseModel):
@@ -14,12 +14,12 @@ class SEmployees(BaseModel):
     id: int
     department_id: int
     full_name: str = Field(
-        ge=MIN_LENGH_STRING_FIELD,
-        le=MAX_LEGTH_STRING_FIELD,
+        min_length=MIN_LENGH_STRING_FIELD,
+        max_length=MAX_LEGTH_STRING_FIELD,
     )
     position: str = Field(
-        ge=MIN_LENGH_STRING_FIELD,
-        le=MAX_LEGTH_STRING_FIELD,
+        min_length=MIN_LENGH_STRING_FIELD,
+        max_length=MAX_LEGTH_STRING_FIELD,
     )
     hired_at: Optional[datetime] = None
     created_at: datetime
@@ -33,12 +33,12 @@ class SEmployeesCreate(BaseModel):
     """Схема для создания сотрудника."""
 
     full_name: str = Field(
-        ge=MIN_LENGH_STRING_FIELD,
-        le=MAX_LEGTH_STRING_FIELD,
+        min_length=MIN_LENGH_STRING_FIELD,
+        max_length=MAX_LEGTH_STRING_FIELD,
     )
     position: str = Field(
-        ge=MIN_LENGH_STRING_FIELD,
-        le=MAX_LEGTH_STRING_FIELD,
+        min_length=MIN_LENGH_STRING_FIELD,
+        max_length=MAX_LEGTH_STRING_FIELD,
     )
     hired_at: Optional[datetime] = None
 

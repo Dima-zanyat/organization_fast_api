@@ -6,14 +6,14 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator, PositiveInt, model_validator
 
-from constant import (
+from app.constant import (
     MAX_LEGTH_STRING_FIELD,
     MIN_LENGH_STRING_FIELD,
     MAX_DIGIT_DEPTH,
     MIN_DIGIT_DEPTH,
     DEFAULT_DEPTH,
 )
-from schemas.empoyees import SEmployees
+from app.schemas.empoyees import SEmployees
 
 
 class SDepartmentBase(BaseModel):
@@ -82,7 +82,7 @@ class SDepartmentDelete(BaseModel):
 
     @model_validator(mode="after")
     def validate_reassign_department(self) -> "SDepartmentDelete":
-        """ "Проверка значения reassign_to_department_id при моде reassign"""
+        """Проверка значения reassign_to_department_id при моде reassign"""
 
         if self.mode == DeleteMode.REASSIGN and self.reassign_to_department_id is None:
             raise ValueError(

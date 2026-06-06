@@ -1,9 +1,9 @@
 """"""
 
-from schemas.empoyees import SEmployeesCreate, SEmployeesResponse
-from services.department_service import DepartmentService
-from repositories.employees import EmployeesRepository
-from repositories.department import DepartmentRepository
+from app.schemas.empoyees import SEmployeesCreate, SEmployeesResponse
+from app.services.department_service import DepartmentService
+from app.repositories.employees import EmployeesRepository
+from app.repositories.department import DepartmentRepository
 
 
 class EmployeeService:

@@ -1,7 +1,4 @@
-import os
-
-# Системные
-DATABASE_URL: str = os.environ["DATABASE_URL"]
+"""Константы приложения."""
 
 # Константы моделей
 MAX_LEGTH_STRING_FIELD: int = 200

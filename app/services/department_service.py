@@ -19,11 +19,11 @@
 
 from typing import Optional
 
-from models.department import DepartmentModel
-from models.employees import EmployeeModel
-from repositories.department import DepartmentRepository
-from repositories.employees import EmployeesRepository
-from schemas.department import (
+from app.models.department import DepartmentModel
+from app.models.employees import EmployeeModel
+from app.repositories.department import DepartmentRepository
+from app.repositories.employees import EmployeesRepository
+from app.schemas.department import (
     SDepartmentCreate,
     SDepartmentGet,
     SDepartmentTree,
@@ -32,7 +32,7 @@ from schemas.department import (
     SDepartmentDelete,
     DeleteMode,
 )
-from schemas.empoyees import SEmployees
+from app.schemas.empoyees import SEmployees
 
 
 class DepartmentService:
@@ -194,6 +194,7 @@ class DepartmentService:
         updated_department = await DepartmentRepository.update(
             department_id=department.id,
             parent_id=new_parent.id,
+            name=data.name,
         )
         return SDepartmentResponse.model_validate(updated_department)
 

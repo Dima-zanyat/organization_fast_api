@@ -1,9 +1,18 @@
 """Конфигуратор базы данных и менеджер сессии."""
 
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
-from constant import DATABASE_URL
+load_dotenv()
+
+# Системные
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
 
 engine = create_async_engine(
     DATABASE_URL,

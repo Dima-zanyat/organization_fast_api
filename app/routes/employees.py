@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, status
 
-from schemas.empoyees import SEmployeesCreate, SEmployeesResponse
-from services.employee_service import EmployeeService
+from app.schemas.empoyees import SEmployeesCreate, SEmployeesResponse
+from app.services.employee_service import EmployeeService
 
 router = APIRouter(prefix="/departments")
 

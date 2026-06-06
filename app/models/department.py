@@ -6,9 +6,8 @@ from typing import Optional
 from sqlalchemy import func, ForeignKey, String, UniqueConstraint, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from constant import MAX_LEGTH_STRING_FIELD
-from database import Model
-from app.models.employees import EmployeeModel
+from app.constant import MAX_LEGTH_STRING_FIELD
+from app.database import Model
 
 
 class DepartmentModel(Model):
@@ -52,8 +51,10 @@ class DepartmentModel(Model):
         "EmployeeModel",
         back_populates="department",
     )
-    __table_args__ = UniqueConstraint(
-        "name",
-        "parent_id",
-        name="uq_department_parent_name",
+    __table_args__ = (
+        UniqueConstraint(
+            "name",
+            "parent_id",
+            name="uq_department_parent_name",
+        ),
     )

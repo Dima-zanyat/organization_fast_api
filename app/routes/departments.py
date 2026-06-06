@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, status
 
-from schemas.department import (
+from app.schemas.department import (
     SDepartmentResponse,
     SDepartmentCreate,
     SDepartmentTree,
@@ -11,7 +11,7 @@ from schemas.department import (
     SDepartmentDelete,
     DeleteMode,
 )
-from services.department_service import DepartmentService
+from app.services.department_service import DepartmentService
 
 router = APIRouter(prefix="/departments")
 
