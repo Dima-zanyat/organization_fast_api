@@ -33,6 +33,11 @@ from app.schemas.department import (
     DeleteMode,
 )
 from app.schemas.empoyees import SEmployees
+from error_handlers import (
+    DepartmentNotFoundException,
+    ValidationException,
+    InvalidDepartmentMoveException,
+)
 
 
 class DepartmentService:
@@ -73,27 +78,27 @@ class DepartmentService:
     """
 
     @classmethod
-    async def create_department(
-        cls,
-        data: SDepartmentCreate,
-    ) -> DepartmentModel:
-        """Логика создания департамента."""
-        if data.parent_id is not None:
-            parent = await DepartmentRepository.get_by_id(department_id=data.parent_id)
-            if parent is None:
-                raise ValueError("Указанный департамент не найден.")
-
-        return await DepartmentRepository.create(data)
-
-    @classmethod
     def validate_department(
         cls,
         department: Optional[DepartmentModel],
     ) -> DepartmentModel:
         """Проверка на exist по department_id."""
         if department is None:
-            raise ValueError("Объект не найден.")
+            raise DepartmentNotFoundException("Департамент не найден.")
         return department
+
+    @classmethod
+    async def create_department(
+        cls,
+        data: SDepartmentCreate,
+    ) -> DepartmentModel:
+        """Логика создания департамента."""
+        if data.parent_id is not None:
+            parent = cls.validate_department(
+                await DepartmentRepository.get_by_id(department_id=data.parent_id)
+            )
+
+        return await DepartmentRepository.create(data)
 
     @classmethod
     async def get_emlpoyees(cls, department_id: int) -> list[SEmployees]:
@@ -153,9 +158,7 @@ class DepartmentService:
             ]
             return node
 
-        root = departments_by_id.get(department_id)
-        if root is None:
-            raise ValueError("Департамент не найден")
+        root = cls.validate_department(departments_by_id.get(department_id))
         return get_tree(department=root)
 
     @classmethod
@@ -176,21 +179,25 @@ class DepartmentService:
         )
 
         if data.parent_id is None:
-            raise ValueError("Необходимо указать parent_id")
+            raise ValidationException("Необходимо указать parent_id")
 
         new_parent = cls.validate_department(
             await DepartmentRepository.get_by_id(data.parent_id)
         )
 
         if department.id == new_parent.id:
-            raise ValueError("Нельзя сделать родителем самого себя.")
+            raise InvalidDepartmentMoveException(
+                "Нельзя сделать родителем самого себя."
+            )
 
         subtree = await DepartmentRepository.get_full_subtree(department.id)
 
         subtree_ids = cls.get_departmnets_ids(subtree)
 
         if new_parent.id in subtree_ids:
-            raise ValueError("Нельзя переместить департамент внутрь своего поддерева.")
+            raise InvalidDepartmentMoveException(
+                "Нельзя переместить департамент внутрь своего поддерева."
+            )
         updated_department = await DepartmentRepository.update(
             department_id=department.id,
             parent_id=new_parent.id,
@@ -203,7 +210,7 @@ class DepartmentService:
         cls,
         department_id: int,
         data: SDepartmentDelete,
-    ):
+    ) -> None:
         """Удаление департамента."""
         department_delete = cls.validate_department(
             await DepartmentRepository.get_by_id(department_id)
@@ -218,6 +225,10 @@ class DepartmentService:
             data.mode == DeleteMode.REASSIGN
             and data.reassign_to_department_id is not None
         ):
+            if department_delete.id == data.reassign_to_department_id:
+                raise ValidationException(
+                    "Нельзя переназначить сотрудников в удаляемый департамент."
+                )
             new_department_for_emploees = cls.validate_department(
                 await DepartmentRepository.get_by_id(data.reassign_to_department_id)
             )
