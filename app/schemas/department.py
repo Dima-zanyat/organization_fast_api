@@ -33,8 +33,8 @@ class SDepartmentBaseCreateOrUpdate(BaseModel):
     """Базовая схема для создания или обновления."""
 
     name: str = Field(
-        ge=MIN_LENGH_STRING_FIELD,
-        le=MAX_LEGTH_STRING_FIELD,
+        min_length=MIN_LENGH_STRING_FIELD,
+        max_length=MAX_LEGTH_STRING_FIELD,
     )
     parent_id: Optional[int] = None
 

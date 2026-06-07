@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.error_handlers import AppException
+from app.exceptions import AppException
 from app.routes.departments import router as dep_routers
 from app.routes.employees import router as emp_routers
 

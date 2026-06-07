@@ -8,11 +8,11 @@ from sqlalchemy.orm import DeclarativeBase
 
 load_dotenv()
 
-# Системные
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set")
+
 
 engine = create_async_engine(
     DATABASE_URL,
@@ -24,6 +24,12 @@ new_session = async_sessionmaker(
     expire_on_commit=False,
     autoflush=True,
 )
+
+
+async def get_session():
+    """Функция-зависимость для получения сессии БД."""
+    async with new_session() as session:
+        yield session
 
 
 class Model(DeclarativeBase):

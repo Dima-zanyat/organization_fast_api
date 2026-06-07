@@ -89,22 +89,27 @@ class DepartmentService:
 
     @classmethod
     async def create_department(
-        cls,
-        data: SDepartmentCreate,
+        cls, data: SDepartmentCreate, session
     ) -> DepartmentModel:
         """Логика создания департамента."""
         if data.parent_id is not None:
             parent = cls.validate_department(
-                await DepartmentRepository.get_by_id(department_id=data.parent_id)
+                await DepartmentRepository.get_by_id(
+                    department_id=data.parent_id,
+                    session=session,
+                )
             )
 
-        return await DepartmentRepository.create(data)
+        return await DepartmentRepository.create(data=data, session=session)
 
     @classmethod
-    async def get_emlpoyees(cls, department_id: int) -> list[SEmployees]:
+    async def get_emlpoyees(cls, department_id: int, session) -> list[SEmployees]:
         """Получение списка сотрудников."""
         employees_orm: list[EmployeeModel] = (
-            await EmployeesRepository.list_by_department_id(department_id=department_id)
+            await EmployeesRepository.list_by_department_id(
+                department_id=department_id,
+                session=session,
+            )
         )
 
         employees = [SEmployees.model_validate(employee) for employee in employees_orm]
@@ -120,11 +125,13 @@ class DepartmentService:
         cls,
         department_id: int,
         data: SDepartmentGet,
+        session,
     ) -> SDepartmentTree:
         """Получение дерева департаментов."""
         departments = await DepartmentRepository.get_subtree_by_depth(
             department_id=department_id,
             depth=data.depth,
+            session=session,
         )
 
         departments_ids: list[int] = cls.get_departmnets_ids(departments)
@@ -138,7 +145,8 @@ class DepartmentService:
 
         if data.include_employees:
             employees = await EmployeesRepository.list_by_departments_ids(
-                department_ids=departments_ids
+                department_ids=departments_ids,
+                session=session,
             )
             for employee in employees:
                 employees_by_department.setdefault(employee.department_id, []).append(
@@ -166,6 +174,7 @@ class DepartmentService:
         cls,
         department_id: int,
         data: SDepartmentUpdate,
+        session,
     ) -> SDepartmentResponse:
         """
         Перемещение департамента в другой родительский департамент.
@@ -175,14 +184,20 @@ class DepartmentService:
         """
 
         department = cls.validate_department(
-            await DepartmentRepository.get_by_id(department_id)
+            await DepartmentRepository.get_by_id(
+                department_id=department_id,
+                session=session,
+            )
         )
 
         if data.parent_id is None:
             raise ValidationException("Необходимо указать parent_id")
 
         new_parent = cls.validate_department(
-            await DepartmentRepository.get_by_id(data.parent_id)
+            await DepartmentRepository.get_by_id(
+                department_id=data.parent_id,
+                session=session,
+            )
         )
 
         if department.id == new_parent.id:
@@ -190,7 +205,10 @@ class DepartmentService:
                 "Нельзя сделать родителем самого себя."
             )
 
-        subtree = await DepartmentRepository.get_full_subtree(department.id)
+        subtree = await DepartmentRepository.get_full_subtree(
+            department_id=department.id,
+            session=session,
+        )
 
         subtree_ids = cls.get_departmnets_ids(subtree)
 
@@ -202,6 +220,7 @@ class DepartmentService:
             department_id=department.id,
             parent_id=new_parent.id,
             name=data.name,
+            session=session,
         )
         return SDepartmentResponse.model_validate(updated_department)
 
@@ -210,17 +229,25 @@ class DepartmentService:
         cls,
         department_id: int,
         data: SDepartmentDelete,
+        session,
     ) -> None:
         """Удаление департамента."""
         department_delete = cls.validate_department(
-            await DepartmentRepository.get_by_id(department_id)
+            await DepartmentRepository.get_by_id(
+                department_id=department_id,
+                session=session,
+            )
         )
         if data.mode == DeleteMode.CASCADE:
             departments = await DepartmentRepository.get_full_subtree(
-                department_delete.id
+                department_id=department_delete.id,
+                session=session,
             )
             departments_ids = cls.get_departmnets_ids(departments)
-            await DepartmentRepository.delete_by_ids(departments_ids)
+            await DepartmentRepository.delete_by_ids(
+                departament_ids=departments_ids,
+                session=session,
+            )
         if (
             data.mode == DeleteMode.REASSIGN
             and data.reassign_to_department_id is not None
@@ -230,14 +257,22 @@ class DepartmentService:
                     "Нельзя переназначить сотрудников в удаляемый департамент."
                 )
             new_department_for_emploees = cls.validate_department(
-                await DepartmentRepository.get_by_id(data.reassign_to_department_id)
+                await DepartmentRepository.get_by_id(
+                    department_id=data.reassign_to_department_id,
+                    session=session,
+                )
             )
             emlpoyees = await EmployeesRepository.list_by_department_id(
-                department_delete.id
+                department_id=department_delete.id,
+                session=session,
             )
             emlpoyees_ids = [e.id for e in emlpoyees]
             await DepartmentRepository.reassign_employees_department(
-                emlpoyees_ids,
-                new_department_for_emploees.id,
+                emlpoyees_ids=emlpoyees_ids,
+                new_department=new_department_for_emploees.id,
+                session=session,
             )
-            await DepartmentRepository.delete_departement(department_delete.id)
+            await DepartmentRepository.delete_departement(
+                departament_id=department_delete.id,
+                session=session,
+            )

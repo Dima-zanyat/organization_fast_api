@@ -16,7 +16,6 @@
 
 from sqlalchemy import select
 
-from app.database import new_session
 from app.schemas.empoyees import SEmployeesCreate
 from app.models.employees import EmployeeModel
 from app.models.department import DepartmentModel
@@ -60,43 +59,41 @@ class EmployeesRepository:
         cls,
         department_id: int,
         data: SEmployeesCreate,
+        session,
     ) -> EmployeeModel:
         """Создать сотрудника в департаменте."""
-        async with new_session() as session:
-            employee = EmployeeModel(**data.model_dump(), department_id=department_id)
-            session.add(employee)
-            await session.commit()
-            await session.refresh(employee)
-            return employee
+        employee = EmployeeModel(**data.model_dump(), department_id=department_id)
+        session.add(employee)
+        await session.commit()
+        await session.refresh(employee)
+        return employee
 
     @classmethod
     async def list_by_department_id(
         cls,
         department_id: int,
+        session,
     ) -> list[EmployeeModel]:
         """Возвращает список сотрудников."""
-        async with new_session() as session:
-            result = await session.execute(
-                select(EmployeeModel)
-                .where(EmployeeModel.department_id == department_id)
-                .order_by(EmployeeModel.created_at)
-            )
-            return list(result.scalars().all())
+        result = await session.execute(
+            select(EmployeeModel)
+            .where(EmployeeModel.department_id == department_id)
+            .order_by(EmployeeModel.created_at)
+        )
+        return list(result.scalars().all())
 
     @classmethod
     async def list_by_departments_ids(
         cls,
         department_ids: list[int],
+        session,
     ) -> list[EmployeeModel]:
         if not department_ids:
             return []
-        async with new_session() as session:
-            result = await session.execute(
-                select(EmployeeModel)
-                .join(
-                    DepartmentModel, EmployeeModel.department_id == DepartmentModel.id
-                )
-                .where(DepartmentModel.id.in_(department_ids))
-                .order_by(EmployeeModel.department_id, EmployeeModel.created_at)
-            )
-            return list(result.scalars().all())
+        result = await session.execute(
+            select(EmployeeModel)
+            .join(DepartmentModel, EmployeeModel.department_id == DepartmentModel.id)
+            .where(DepartmentModel.id.in_(department_ids))
+            .order_by(EmployeeModel.department_id, EmployeeModel.created_at)
+        )
+        return list(result.scalars().all())

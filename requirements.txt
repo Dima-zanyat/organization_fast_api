@@ -7,3 +7,5 @@ httpx
 alembic
 asyncpg
 psycopg
+pytest
+pytest-acyncio
