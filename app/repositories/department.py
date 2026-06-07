@@ -11,6 +11,7 @@ from app.database import new_session
 from app.schemas.department import SDepartmentCreate
 from app.models.department import DepartmentModel
 from app.models.employees import EmployeeModel
+from app.error_handlers import DepartmentNotFoundException
 
 
 class DepartmentRepository:
@@ -161,7 +162,9 @@ class DepartmentRepository:
                 department_id,
             )
             if department is None:
-                raise ValueError("Департамента с таким id не существует.")
+                raise DepartmentNotFoundException(
+                    "Департамента с таким id не существует."
+                )
             department.parent_id = parent_id
             department.name = name
             session.add(department)

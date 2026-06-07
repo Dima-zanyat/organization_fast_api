@@ -33,7 +33,7 @@ from app.schemas.department import (
     DeleteMode,
 )
 from app.schemas.empoyees import SEmployees
-from error_handlers import (
+from app.exceptions import (
     DepartmentNotFoundException,
     ValidationException,
     InvalidDepartmentMoveException,
