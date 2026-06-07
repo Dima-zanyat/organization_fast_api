@@ -5,3 +5,15 @@ __pycache__/
 .env
 .idea/
 .vscode/
+test_db_value.pyc
+test_db.py
+test.db
+# Базы данных SQLite (основные файлы)
+*.sqlite
+*.sqlite3
+*.db
+
+# Временные файлы SQLite (журналы и кэш транзакций)
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

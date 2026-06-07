@@ -4,8 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.main import app
 from app.database import Model, get_session
-
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+from tests.constant import TEST_DATABASE_URL, BASE_URL_TEST
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=True)
 
@@ -39,6 +38,6 @@ async def prepare_db():
 async def client():
     async with AsyncClient(
         transport=ASGITransport(app=app),
-        base_url="http://test",
+        base_url=BASE_URL_TEST,
     ) as ac:
         yield ac

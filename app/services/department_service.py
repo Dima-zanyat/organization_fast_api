@@ -19,6 +19,8 @@
 
 from typing import Optional
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.models.department import DepartmentModel
 from app.models.employees import EmployeeModel
 from app.repositories.department import DepartmentRepository
@@ -89,7 +91,9 @@ class DepartmentService:
 
     @classmethod
     async def create_department(
-        cls, data: SDepartmentCreate, session
+        cls,
+        data: SDepartmentCreate,
+        session: AsyncSession,
     ) -> DepartmentModel:
         """Логика создания департамента."""
         if data.parent_id is not None:
@@ -103,7 +107,11 @@ class DepartmentService:
         return await DepartmentRepository.create(data=data, session=session)
 
     @classmethod
-    async def get_emlpoyees(cls, department_id: int, session) -> list[SEmployees]:
+    async def get_emlpoyees(
+        cls,
+        department_id: int,
+        session: AsyncSession,
+    ) -> list[SEmployees]:
         """Получение списка сотрудников."""
         employees_orm: list[EmployeeModel] = (
             await EmployeesRepository.list_by_department_id(
@@ -125,7 +133,7 @@ class DepartmentService:
         cls,
         department_id: int,
         data: SDepartmentGet,
-        session,
+        session: AsyncSession,
     ) -> SDepartmentTree:
         """Получение дерева департаментов."""
         departments = await DepartmentRepository.get_subtree_by_depth(
@@ -174,7 +182,7 @@ class DepartmentService:
         cls,
         department_id: int,
         data: SDepartmentUpdate,
-        session,
+        session: AsyncSession,
     ) -> SDepartmentResponse:
         """
         Перемещение департамента в другой родительский департамент.
@@ -229,7 +237,7 @@ class DepartmentService:
         cls,
         department_id: int,
         data: SDepartmentDelete,
-        session,
+        session: AsyncSession,
     ) -> None:
         """Удаление департамента."""
         department_delete = cls.validate_department(

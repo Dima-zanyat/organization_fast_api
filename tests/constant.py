@@ -3,4 +3,5 @@
 CREATE_DEPARTMENT_URL = "/departments/"
 BASE_DEPARTMENT = "BASE_DEPARTMENT"
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+BASE_URL_TEST = "http://test"

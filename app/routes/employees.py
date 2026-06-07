@@ -1,9 +1,11 @@
 """Ендпоинты для работы с сотрудниками."""
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, status, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.empoyees import SEmployeesCreate, SEmployeesResponse
 from app.services.employee_service import EmployeeService
+from app.database import get_session
 
 router = APIRouter(prefix="/departments")
 
@@ -16,9 +18,11 @@ router = APIRouter(prefix="/departments")
 async def create_employee(
     department_id: int,
     data: SEmployeesCreate,
+    session: AsyncSession = Depends(get_session),
 ):
     """Создание сотрудника в департаменте."""
     return await EmployeeService.create_employee(
         department_id=department_id,
         data=data,
+        session=session,
     )

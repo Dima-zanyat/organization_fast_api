@@ -6,6 +6,8 @@
 с репозиториями.
 """
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.schemas.empoyees import SEmployeesCreate, SEmployeesResponse
 from app.services.department_service import DepartmentService
 from app.repositories.employees import EmployeesRepository
@@ -37,7 +39,7 @@ class EmployeeService:
         cls,
         department_id: int,
         data: SEmployeesCreate,
-        session,
+        session: AsyncSession,
     ) -> SEmployeesResponse:
         """Метод для создания сотрудников."""
         department = await DepartmentRepository.get_by_id(

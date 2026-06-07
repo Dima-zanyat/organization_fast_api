@@ -2,10 +2,9 @@
 
 from typing import Optional
 
-from fastapi import Depends
 from sqlalchemy import select, literal, update, delete
-from sqlalchemy.orm import aliased, Session
-
+from sqlalchemy.orm import aliased
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constant import REDUCT_NUMBER_RECURSION
 from app.schemas.department import SDepartmentCreate
@@ -21,7 +20,7 @@ class DepartmentRepository:
     async def create(
         cls,
         data: SDepartmentCreate,
-        session,
+        session: AsyncSession,
     ) -> DepartmentModel:
         """Создание департамента."""
         department_data = data.model_dump()
@@ -35,7 +34,7 @@ class DepartmentRepository:
     async def get_by_id(
         cls,
         department_id: int,
-        session,
+        session: AsyncSession,
     ) -> Optional[DepartmentModel]:
         """Получение объекта департамента."""
         department = await session.get(
@@ -92,7 +91,7 @@ class DepartmentRepository:
     async def get_subtree(
         cls,
         department_id: int,
-        session,
+        session: AsyncSession,
         params=None,
     ) -> list[DepartmentModel]:
         """Получени поддерева департамента с возможностью выбора параметра."""
@@ -114,7 +113,7 @@ class DepartmentRepository:
         cls,
         department_id: int,
         depth: int,
-        session,
+        session: AsyncSession,
     ) -> list[DepartmentModel]:
         """Получение всех дпартаментов до указанной глубины."""
         params = {"depth": depth}
@@ -128,7 +127,7 @@ class DepartmentRepository:
     async def get_full_subtree(
         cls,
         department_id: int,
-        session,
+        session: AsyncSession,
     ) -> list[DepartmentModel]:
         """Получение полного поддерева департамента без ограничения глубины."""
 
@@ -138,7 +137,7 @@ class DepartmentRepository:
     async def list_by_parent_id(
         cls,
         parent_id: int,
-        session,
+        session: AsyncSession,
     ) -> list[DepartmentModel]:
         """Получение списка департаментов."""
 
@@ -153,7 +152,7 @@ class DepartmentRepository:
         department_id: int,
         parent_id: int,
         name: str,
-        session,
+        session: AsyncSession,
     ) -> DepartmentModel:
         """Назначение нового департамента."""
         department = await session.get(
@@ -174,7 +173,7 @@ class DepartmentRepository:
         cls,
         emlpoyees_ids: list[int],
         new_department: int,
-        session,
+        session: AsyncSession,
     ) -> None:
         """Перемещеие сотрудников в другой департамент."""
         await session.execute(
@@ -188,7 +187,7 @@ class DepartmentRepository:
     async def delete_departement(
         cls,
         departament_id: int,
-        session,
+        session: AsyncSession,
     ) -> None:
         """Удаление одного департамента."""
         await session.execute(
@@ -200,7 +199,7 @@ class DepartmentRepository:
     async def delete_by_ids(
         cls,
         departament_ids: list[int],
-        session,
+        session: AsyncSession,
     ) -> None:
         """Каскадное удаление департамента."""
         await session.execute(
