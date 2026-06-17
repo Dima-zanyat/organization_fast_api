@@ -14,6 +14,8 @@
 входных данных — он работает исключительно с базой данных через ORM.
 """
 
+from typing import Optional
+
 from sqlalchemy import select
 
 from app.schemas.empoyees import SEmployeesCreate
@@ -87,7 +89,7 @@ class EmployeesRepository:
         cls,
         department_ids: list[int],
         session,
-    ) -> list[EmployeeModel]:
+    ) -> list[Optional[EmployeeModel]]:
         if not department_ids:
             return []
         result = await session.execute(
@@ -95,5 +97,8 @@ class EmployeesRepository:
             .join(DepartmentModel, EmployeeModel.department_id == DepartmentModel.id)
             .where(DepartmentModel.id.in_(department_ids))
             .order_by(EmployeeModel.department_id, EmployeeModel.created_at)
+        )
+        print(
+            f"TEST{list(result.scalars().all())}________________________________________________"
         )
         return list(result.scalars().all())

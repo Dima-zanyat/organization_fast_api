@@ -156,10 +156,13 @@ class DepartmentService:
                 department_ids=departments_ids,
                 session=session,
             )
-            for employee in employees:
-                employees_by_department.setdefault(employee.department_id, []).append(
-                    SEmployees.model_validate(employee)
-                )
+            if employees:
+                for employee in employees:
+                    if employee is not None:
+                        employees_by_department.setdefault(
+                            employee.department_id, []
+                        ).append(SEmployees.model_validate(employee))
+
         child_by_departments: dict[int | None, list[DepartmentModel]] = {}
 
         for department in departments:
@@ -167,7 +170,12 @@ class DepartmentService:
 
         def get_tree(department: DepartmentModel) -> SDepartmentTree:
             """Рекурсивное получение дерева."""
-            node = SDepartmentTree.model_validate(department)
+            node = SDepartmentTree(
+                id=department.id,
+                name=department.name,
+                parent_id=department.parent_id,
+                created_at=department.created_at,
+            )
             node.employees = employees_by_department.get(department.id, [])
             node.children = [
                 get_tree(child) for child in child_by_departments.get(department.id, [])

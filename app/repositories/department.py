@@ -103,9 +103,9 @@ class DepartmentRepository:
             tree_cte=tree_cte,
             conditions=condition,
         )
-        final_tree_query = tree_cte.union_all(recursive_query)
-        query_result = await session.execute(select(final_tree_query))
-
+        final_tree_cte = tree_cte.union_all(recursive_query)
+        cte_alias = aliased(DepartmentModel, final_tree_cte)
+        query_result = await session.execute(select(cte_alias))
         return list(query_result.scalars().all())
 
     @classmethod
