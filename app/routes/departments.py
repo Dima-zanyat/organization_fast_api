@@ -19,7 +19,7 @@ router = APIRouter(prefix="/departments")
 
 
 @router.post(
-    "/", response_model=SDepartmentResponse, status_code=status.HTTP_201_CREATED
+    "", response_model=SDepartmentResponse, status_code=status.HTTP_201_CREATED
 )
 async def create_department(
     data: SDepartmentCreate,

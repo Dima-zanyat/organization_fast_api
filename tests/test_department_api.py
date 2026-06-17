@@ -6,7 +6,11 @@ from http import HTTPStatus
 from tests.constant import (
     BASE_DEPARTMENT,
     CREATE_DEPARTMENT_URL,
+    CREATE_EMPLOYEES_URL,
     GET_DEPARTMENTS_TREE_URL,
+    TEST_DEPTH,
+    NAME_EMPLOYE,
+    POSITION_EMPLOYE,
 )
 
 
@@ -27,7 +31,21 @@ async def test_create_department(client):
 async def test_get_department(client):
     response = await client.get(
         GET_DEPARTMENTS_TREE_URL,
-        params={"depth": 1},
+        params={"depth": TEST_DEPTH},
     )
 
     assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.asyncio
+async def test_post_employees(client):
+    response = await client.post(
+        CREATE_EMPLOYEES_URL,
+        json={
+            "full_name": NAME_EMPLOYE,
+            "position": POSITION_EMPLOYE,
+        },
+    )
+    print("TEST_EMPLOYEES", response)
+
+    assert response.status_code == HTTPStatus.CREATED
