@@ -71,17 +71,12 @@ async def update_department(
 @router.delete("/{department_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_department(
     department_id: int,
-    mode: DeleteMode,
-    reassign_to_department_id: int,
+    params: SDepartmentDelete = Depends(),
     session: AsyncSession = Depends(get_session),
 ):
-    data = SDepartmentDelete(
-        mode=mode,
-        reassign_to_department_id=reassign_to_department_id,
-    )
     await DepartmentService.delete_department(
         department_id=department_id,
-        data=data,
+        data=params,
         session=session,
     )
     return None

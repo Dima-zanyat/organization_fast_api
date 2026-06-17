@@ -151,7 +151,7 @@ class DepartmentRepository:
         cls,
         department_id: int,
         parent_id: int,
-        name: str,
+        name: Optional[str],
         session: AsyncSession,
     ) -> DepartmentModel:
         """Назначение нового департамента."""
@@ -162,7 +162,8 @@ class DepartmentRepository:
         if department is None:
             raise DepartmentNotFoundException("Департамента с таким id не существует.")
         department.parent_id = parent_id
-        department.name = name
+        if name:
+            department.name = name
         session.add(department)
         await session.commit()
         await session.refresh(department)

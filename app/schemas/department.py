@@ -29,31 +29,41 @@ class SDepartmentBase(BaseModel):
     }
 
 
-class SDepartmentBaseCreateOrUpdate(BaseModel):
-    """Базовая схема для создания или обновления."""
+class NameStripMixin:
 
-    name: str = Field(
-        min_length=MIN_LENGH_STRING_FIELD,
-        max_length=MAX_LEGTH_STRING_FIELD,
-    )
-    parent_id: Optional[int] = None
-
-    @field_validator("name")
+    @field_validator("name", mode="before")
     @classmethod
     def strip_field(cls, value: str) -> str:
         return value.strip()
+
+
+class SDepartmentBaseCreateOrUpdate(BaseModel):
+    """Базовая схема для создания или обновления."""
+
+    parent_id: Optional[int] = None
 
 
 class SDepartmentResponse(SDepartmentBase):
     """Схема ответа на запрос."""
 
 
-class SDepartmentCreate(SDepartmentBaseCreateOrUpdate):
+class SDepartmentCreate(NameStripMixin, SDepartmentBaseCreateOrUpdate):
     """Схема на запрос создания депатамента."""
 
+    name: str = Field(
+        min_length=MIN_LENGH_STRING_FIELD,
+        max_length=MAX_LEGTH_STRING_FIELD,
+    )
 
-class SDepartmentUpdate(SDepartmentBaseCreateOrUpdate):
+
+class SDepartmentUpdate(NameStripMixin, SDepartmentBaseCreateOrUpdate):
     """Схема на запрос обновления департамента."""
+
+    name: Optional[str] = Field(
+        default=None,
+        min_length=MIN_LENGH_STRING_FIELD,
+        max_length=MAX_LEGTH_STRING_FIELD,
+    )
 
 
 class SDepartmentGet(BaseModel):
@@ -78,7 +88,7 @@ class SDepartmentDelete(BaseModel):
     """Схема запроса на удаление департамента."""
 
     mode: DeleteMode = Field(description="режим удаления только cascade или reassign")
-    reassign_to_department_id: PositiveInt | None = None
+    reassign_to_department_id: Optional[PositiveInt] = Field(default=None)
 
     @model_validator(mode="after")
     def validate_reassign_department(self) -> "SDepartmentDelete":

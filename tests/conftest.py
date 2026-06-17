@@ -4,7 +4,14 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.main import app
 from app.database import Model, get_session
-from tests.constant import TEST_DATABASE_URL, BASE_URL_TEST
+from tests.constant import (
+    TEST_DATABASE_URL,
+    BASE_URL_TEST,
+    PATCH_DEPARTMENT,
+    CREATE_DEPARTMENT_URL,
+    BASE_DEPARTMENT_NAME,
+    DELETE_DEPARTMENT,
+)
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=True)
 
@@ -41,3 +48,76 @@ async def client():
         base_url=BASE_URL_TEST,
     ) as ac:
         yield ac
+
+
+@pytest_asyncio.fixture
+async def base_department(client):
+    response = await client.post(
+        CREATE_DEPARTMENT_URL,
+        json={
+            "name": BASE_DEPARTMENT_NAME,
+            "parent_id": None,
+        },
+    )
+    return response.json()
+
+
+@pytest_asyncio.fixture
+async def department_tree(client):
+
+    root = await client.post(
+        CREATE_DEPARTMENT_URL,
+        json={
+            "name": BASE_DEPARTMENT_NAME,
+            "parent_id": None,
+        },
+    )
+    root = root.json()
+
+    dep_a = await client.post(
+        CREATE_DEPARTMENT_URL,
+        json={
+            "name": "dep_a",
+            "parent_id": root.get("id"),
+        },
+    )
+    dep_a = dep_a.json()
+
+    dep_b = await client.post(
+        CREATE_DEPARTMENT_URL,
+        json={
+            "name": "dep_b",
+            "parent_id": root.get("id"),
+        },
+    )
+    dep_b = dep_b.json()
+
+    dep_c = await client.post(
+        CREATE_DEPARTMENT_URL,
+        json={
+            "name": "dep_c",
+            "parent_id": dep_a.get("id"),
+        },
+    )
+    dep_c = dep_c.json()
+    return {
+        "root": root,
+        "dep_a": dep_a,
+        "dep_b": dep_b,
+        "dep_c": dep_c,
+    }
+
+
+@pytest_asyncio.fixture
+async def get_patch_url(department_tree):
+    return PATCH_DEPARTMENT + str(department_tree.get("dep_c").get("id"))
+
+
+@pytest_asyncio.fixture
+async def delete_dep_url_cascade(department_tree):
+    return DELETE_DEPARTMENT + str(department_tree.get("dep_b").get("id"))
+
+
+@pytest_asyncio.fixture
+async def delete_dep_url_reassign(department_tree):
+    return DELETE_DEPARTMENT + str(department_tree.get("dep_c").get("id"))
