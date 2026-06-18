@@ -98,7 +98,4 @@ class EmployeesRepository:
             .where(DepartmentModel.id.in_(department_ids))
             .order_by(EmployeeModel.department_id, EmployeeModel.created_at)
         )
-        print(
-            f"TEST{list(result.scalars().all())}________________________________________________"
-        )
         return list(result.scalars().all())

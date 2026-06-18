@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 from app.main import app
 from app.database import Model, get_session
+from app.schemas.empoyees import SEmployeesCreate
 from tests.constant import (
     TEST_DATABASE_URL,
     BASE_URL_TEST,
@@ -11,6 +12,8 @@ from tests.constant import (
     CREATE_DEPARTMENT_URL,
     BASE_DEPARTMENT_NAME,
     DELETE_DEPARTMENT,
+    NAME_EMPLOYE,
+    POSITION_EMPLOYE,
 )
 
 test_engine = create_async_engine(TEST_DATABASE_URL, echo=True)
@@ -21,7 +24,6 @@ TestSessionLocal = async_sessionmaker(
 )
 
 
-# dependency override
 async def override_get_session():
     async with TestSessionLocal() as session:
         yield session
@@ -30,7 +32,7 @@ async def override_get_session():
 app.dependency_overrides[get_session] = override_get_session
 
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
+@pytest_asyncio.fixture(scope="module", autouse=True)
 async def prepare_db():
     async with test_engine.begin() as conn:
         await conn.run_sync(Model.metadata.create_all)
@@ -48,6 +50,13 @@ async def client():
         base_url=BASE_URL_TEST,
     ) as ac:
         yield ac
+
+
+@pytest_asyncio.fixture
+async def test_session():
+    async with TestSessionLocal() as session:
+        yield session
+        await session.rollback()
 
 
 @pytest_asyncio.fixture
